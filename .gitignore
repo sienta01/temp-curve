@@ -1,0 +1,11 @@
+# Password
+.env
+.env.*
+!.env.example
+
+# Patient data: the server's data folder, exports, and backups
+data/
+kurva-suhu_*
+temp-curve-backup*.tar.gz
+
+.DS_Store

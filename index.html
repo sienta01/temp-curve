@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kurva Suhu</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23fff'/%3E%3Cpath d='M0 7h16M0 9.5h16' stroke='%23d42c2d'/%3E%3Cpath d='M2 12l4-7 4 5 4-7' fill='none' stroke='%231746b4' stroke-width='1.8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="title">
+      <h1>Kurva Suhu</h1>
+      <span id="status" class="status" role="status">Memuat…</span>
+    </div>
+    <div class="picker">
+      <label for="patient">Pasien</label>
+      <select id="patient"></select>
+      <button type="button" id="add-patient">Pasien baru</button>
+      <button type="button" id="del-patient">Hapus pasien</button>
+      <span class="sep"></span>
+      <button type="button" id="backup">Cadangkan</button>
+      <button type="button" id="restore">Pulihkan</button>
+      <input id="restore-file" type="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <p id="storage-warning" class="warning" role="alert" hidden>
+    Browser ini menolak penyimpanan, jadi data akan hilang saat halaman ditutup. Klik Cadangkan sebelum keluar.
+  </p>
+
+  <div id="load-error" class="warning" role="alert" hidden>
+    Data tidak bisa dimuat dari server.
+    <button type="button" id="reload">Coba lagi</button>
+  </div>
+
+  <main>
+    <section class="identity" aria-labelledby="h-identity">
+      <h2 id="h-identity">Identitas</h2>
+      <label>Nama <input id="nama" type="text" autocomplete="off"></label>
+      <label>Ruangan <input id="ruangan" type="text" autocomplete="off"></label>
+      <label>No RM <input id="rm" type="text" autocomplete="off"></label>
+      <label>Tanggal mulai <input id="start" type="date" required aria-describedby="start-help"></label>
+      <p id="start-help" class="help">Mengganti tanggal ini menggeser semua baris di tabel.</p>
+    </section>
+
+    <section class="entry" aria-labelledby="h-entry">
+      <div class="head">
+        <h2 id="h-entry">Suhu (°C)</h2>
+        <div class="options">
+          <label>Kolom
+            <select id="step">
+              <option value="180">per 3 jam</option>
+              <option value="60">per 1 jam</option>
+            </select>
+          </label>
+        </div>
+        <div class="tools">
+          <button type="button" id="undo">Urungkan</button>
+          <button type="button" id="redo">Ulangi</button>
+          <span class="sep"></span>
+          <button type="button" id="time-add">+ Jam</button>
+          <button type="button" id="time-clean">Hapus jam kosong</button>
+          <span class="sep"></span>
+          <button type="button" id="day-before">+ Hari sebelum</button>
+          <button type="button" id="day-after">+ Hari sesudah</button>
+          <span class="pair">
+            <button type="button" id="day-remove-first">Hapus hari sebelum</button>
+            <button type="button" id="day-remove">Hapus hari terakhir</button>
+          </span>
+        </div>
+      </div>
+      <div class="cellbar">
+        <span id="cell-time"></span>
+        <span id="cell-value"></span>
+      </div>
+      <div class="grid" id="grid"></div>
+      <p class="help">
+        <kbd>Enter</kbd> pindah ke jam berikutnya. Ketik <b>368</b> untuk <b id="sample">36.8</b>.
+        Salin dan tempel langsung dari Excel. <b>+ Jam</b> menambah waktu lain, misalnya 07:15 atau setiap 15 menit.
+      </p>
+    </section>
+
+    <section class="result" aria-labelledby="h-result">
+      <div class="head">
+        <h2 id="h-result">Kurva</h2>
+        <div class="options">
+          <label>Hari per baris
+            <select id="per-row">
+              <option>1</option><option>2</option><option>3</option><option>5</option><option>7</option><option>10</option><option>14</option>
+            </select>
+          </label>
+          <label class="check"><input id="show-values" type="checkbox"> Tampilkan angka</label>
+        </div>
+        <div class="tools">
+          <button type="button" id="csv">Unduh CSV</button>
+          <button type="button" id="print">Cetak / PDF</button>
+          <button type="button" id="copy">Salin gambar</button>
+          <button type="button" id="png" class="primary">Unduh PNG</button>
+        </div>
+      </div>
+      <p id="bad-cells" class="warning" hidden></p>
+      <div class="sheet-scroll">
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="tip" class="tip" hidden><b></b><span></span></div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <dialog id="time-dialog" aria-labelledby="h-time">
+    <form method="dialog" id="time-form">
+      <h2 id="h-time">Tambah jam</h2>
+      <div class="fields">
+        <label>Dari <input id="time-from" type="text" inputmode="numeric" autocomplete="off" placeholder="07:15"></label>
+        <label>Sampai <input id="time-to" type="text" inputmode="numeric" autocomplete="off" placeholder="opsional"></label>
+        <label>Setiap
+          <select id="time-every">
+            <option value="15">15 menit</option>
+            <option value="30">30 menit</option>
+            <option value="60">1 jam</option>
+          </select>
+        </label>
+      </div>
+      <p id="time-preview" class="help" aria-live="polite"></p>
+      <div class="tools">
+        <button type="button" id="time-cancel">Batal</button>
+        <button type="submit" id="time-ok" class="primary" disabled>Tambah</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm">
+    <form method="dialog">
+      <p id="confirm-text"></p>
+      <div class="tools">
+        <button value="no" autofocus>Batal</button>
+        <button value="yes" class="danger">Hapus pasien</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/model.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

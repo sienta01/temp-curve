@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.env.*
+data
+docs
+kurva-suhu_*
+*.tar.gz
+*.md
+.DS_Store
