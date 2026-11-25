@@ -9,7 +9,8 @@ The patients in these screenshots are invented.
 
 ## Features
 
-- **Spreadsheet entry.** One row per ward day, with a column every 3 hours or every hour.
+- **Spreadsheet entry.** One row per ward day, with columns at 06, 09, 12, 15, 18, 22 and 02
+  or every hour.
   Type `368` for 36.8, press Enter for the next time, paste from Excel, undo and redo.
 - **Any time.** **+ Jam** adds columns for other times, for example 07:15 or every 15 minutes.
 - **Chart like the paper form.** Red double line at 38 °C, fever in red in the table. Readings

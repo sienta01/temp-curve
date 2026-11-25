@@ -5,11 +5,14 @@ const Model = (() => {
   'use strict';
 
   // One table row is one ward day: 04:30 until 04:29 the next morning. 00:00-04:29 is
-  // therefore the next calendar date, matching the 00 and 03 columns of the paper form.
+  // therefore the next calendar date, like the 02 column.
   const DAY = 1440;
   const DAY_START = 270;
   const FIRST_HOUR = 360;
-  const STEPS = [180, 60]; // standard columns: every 3 hours or every hour
+  // Standard columns: the default ward times (180, the chart still draws 3-hour columns)
+  // or every hour (60).
+  const STEPS = [180, 60];
+  const DEFAULT_TIMES = ['06:00', '09:00', '12:00', '15:00', '18:00', '22:00', '02:00'];
 
   const FEVER = 38;
   const FLOOR = 35; // bottom line of the chart; lower readings are marked off-scale
@@ -165,6 +168,7 @@ const Model = (() => {
   }
 
   function standardTimes(step) {
+    if (step === 180) return [...DEFAULT_TIMES];
     const out = [];
     for (let m = 0; m < DAY; m += step) out.push(hhmm((FIRST_HOUR + m) % DAY));
     return out;
@@ -293,9 +297,10 @@ const Model = (() => {
     };
     if (Array.isArray(p?.days)) {
       out.dayCount = Math.max(1, Math.min(p.days.length, MAX_DAYS));
-      const { key } = sheet(out);
+      const times = Array.from({ length: 8 }, (_, c) => hhmm((FIRST_HOUR + c * 180) % DAY));
       p.days.slice(0, MAX_DAYS).forEach((day, r) => {
-        if (Array.isArray(day)) day.slice(0, 8).forEach((raw, c) => put(out, key(r, c), text(raw)));
+        const date = addDays(out.start, r);
+        if (Array.isArray(day)) day.slice(0, 8).forEach((raw, c) => put(out, keyAt(date, times[c]), text(raw)));
       });
     } else {
       for (const [key, raw] of Object.entries(p?.readings ?? {})) if (isKey(key)) put(out, key, text(raw));
